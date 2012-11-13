@@ -579,12 +579,16 @@ void global_queue_pop_work(global_queue_t* global_queue, deck_t* local_queue) {
 }
 
 void global_queue_offer_work(global_queue_t* global_queue, deck_t* local_queue) {
-    int localqueuesize = 10;
-    if ((global_queue->waiters && localqueuesize > 2) ||
+    int decklength = local_queue->length;
+    if ((global_queue->waiters && decklength > 1) ||
             (global_queue->count < GLOBAL_QUEUE_SIZE_MIN &&
-             localqueuesize > LOCAL_QUEUE_SIZE / 2)) {
+             decklength > LOCAL_QUEUE_SIZE / 2)) {
         if (pthread_mutex_trylock(&global_queue->lock)) {
-            //TODO: push up to queue
+            int num_items_to_push = decklength / 2;
+            while (num_items_to_push > 0) {
+                VALUE value = deck_pop_back(local_queue);
+                //TODO: add to global queue
+            }
             if (global_queue->waiters) {
                 pthread_cond_broadcast(&global_queue->wait_condition);
             }
