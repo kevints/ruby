@@ -113,17 +113,11 @@ void
 rb_reset_method_entry(void *pvm)
 {
     rb_vm_t *vm = pvm;
-    struct unlinked_method_entry_list_entry *ume = vm->unlinked_method_entry_list, *prev_ume = 0, *curr_ume;
+    struct unlinked_method_entry_list_entry *ume = vm->unlinked_method_entry_list;
 
     while (ume) {
-	if (ume->me->mark) {
-	    ume->me->mark = 0;
-	    prev_ume = ume;
-	    ume = ume->next;
-	}
-	else {
-	    // Do Nothing!
-	}
+	ume->me->mark = 0;
+	ume = ume->next;
     }
 }
 
