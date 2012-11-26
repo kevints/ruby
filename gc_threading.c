@@ -7,8 +7,9 @@
 #define MODE_SINGLE_THREAD 0
 #define MODE_MULTITHREAD 1
 #define MODE_DUAL 2
+#define MODE_SINGLE_THREAD_TWICE 3
 
-static int mode = MODE_DUAL;
+static int mode = MODE_SINGLE_THREAD_TWICE;
 
 #define NTHREADS 4
 #define GLOBAL_QUEUE_SIZE 500 /*TODO*/
@@ -300,9 +301,24 @@ void gc_markall(void* objspace) {
             break;
         case MODE_DUAL:
             gc_defer_mark = 1;
+            GC_TEST_LOG("A\n");
             gc_mark_parallel(objspace);
+            GC_TEST_LOG("END\n");
             gc_mark_reset(objspace);
             gc_defer_mark = 0;
+            GC_TEST_LOG("B\n");
             gc_start_mark(objspace);
+            GC_TEST_LOG("END\n");
+            break;
+        case MODE_SINGLE_THREAD_TWICE:
+            gc_defer_mark = 0;
+            GC_TEST_LOG("A\n");
+            gc_start_mark(objspace);
+            GC_TEST_LOG("END\n");
+            gc_mark_reset(objspace);
+            GC_TEST_LOG("B\n");
+            gc_start_mark(objspace);
+            GC_TEST_LOG("END\n");
+            break;
     }
 }

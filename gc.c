@@ -1626,6 +1626,7 @@ rb_gc_mark_maybe(VALUE obj)
 static void
 gc_mark_object(rb_objspace_t *objspace, VALUE ptr, int lev)
 {
+    GC_TEST_LOG("%lu\n", ptr);
     register RVALUE *obj;
 
     obj = RANY(ptr);

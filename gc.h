@@ -106,4 +106,16 @@ extern void gc_mark_reset(void* objspace);
 extern void gc_do_mark(void* objspace, VALUE ptr);
 extern void gc_start_mark(void* objspace);
 
+/** Test code */
+#define GC_MARK_TEST 1
+#define TEST_LOG_PREFIX "GCTest"
+
+#if GC_MARK_TEST
+#define GC_TEST_LOG(...)                              \
+    printf(TEST_LOG_PREFIX ": " __VA_ARGS__)
+#else
+#define GC_TEST_LOG(...)              \
+    //noop
+#endif
+
 #endif /* RUBY_GC_H */
