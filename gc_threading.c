@@ -1,6 +1,6 @@
 #include "ruby/ruby.h"
-#include <assert.h>
 #include "gc.h"
+#include <assert.h>
 #include <stdio.h>
 #include <pthread.h>
 
@@ -19,9 +19,9 @@ static int mode = MODE_DUAL;
 #define DEQUE_FULL 0
 #define DEQUE_EMPTY -1
 
-#define GC_THREADING_DEBUG 1
+#define GC_THREADING_DEBUG 0
 
-#ifdef GC_THREADING_DEBUG
+#if GC_THREADING_DEBUG
 #define debug_print(...)                        \
     printf(__VA_ARGS__)
 #else
@@ -37,13 +37,6 @@ static int mode = MODE_DUAL;
     ((a) < (b) ? (a) : (b))
 
 
-/** Defined in gc.c */
-extern int gc_defer_mark;
-extern void gc_mark_reset(void* objspace);
-extern void gc_do_mark(void* objspace, VALUE ptr);
-extern void gc_start_mark(void* objspace);
-
-pthread_key_t thread_id_k;
 /**
  * Deque
  */
@@ -217,6 +210,7 @@ static void global_queue_offer_work(global_queue_t* global_queue, deque_t* local
 void* active_objspace;
 global_queue_t* global_queue;
 pthread_key_t thread_local_deque_k;
+pthread_key_t thread_id_k;
 
 static void* mark_run_loop(void* arg) {
     long thread_id = (long) arg;

@@ -96,4 +96,14 @@ void rb_objspace_each_objects(
 #pragma GCC visibility pop
 #endif
 
+/** Defined in gc_threading.c */
+extern void gc_mark_defer(void *objspace, VALUE ptr, int lev);
+extern void gc_markall(void* objspace);
+
+/** Defined in gc.c */
+extern int gc_defer_mark;
+extern void gc_mark_reset(void* objspace);
+extern void gc_do_mark(void* objspace, VALUE ptr);
+extern void gc_start_mark(void* objspace);
+
 #endif /* RUBY_GC_H */

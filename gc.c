@@ -1652,9 +1652,6 @@ gc_mark_object(rb_objspace_t *objspace, VALUE ptr, int lev)
     gc_mark_children(objspace, ptr, lev+1);
 }
 
-/** Defined in gc_threading.c */
-extern void gc_mark_defer(rb_objspace_t *objspace, VALUE ptr, int lev);
-
 static void
 gc_mark(rb_objspace_t *objspace, VALUE ptr, int lev) {
     if (gc_defer_mark) {
@@ -2170,8 +2167,6 @@ rest_sweep(rb_objspace_t *objspace)
        after_gc_sweep(objspace);
     }
 }
-
-extern void gc_markall(void* objspace);
 
 static void gc_marks(rb_objspace_t *objspace);
 
