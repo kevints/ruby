@@ -1626,8 +1626,9 @@ rb_gc_mark_maybe(VALUE obj)
 static void
 gc_mark_object(rb_objspace_t *objspace, VALUE ptr, int lev)
 {
-    GC_TEST_LOG("%lu\n", ptr);
     register RVALUE *obj;
+    GC_TEST_LOG("%lu\n", ptr);
+    
 
     obj = RANY(ptr);
     if (rb_special_const_p(ptr)) return; /* special const not marked */
