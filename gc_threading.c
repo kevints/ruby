@@ -42,6 +42,11 @@ static int mode = MODE_SINGLE_THREAD_TWICE;
  * Deque
  */
 
+#define ASSERT_SANE_DEQUE(d) {\
+  assert(d != NULL);\
+  assert(d->max_length >= 0);\
+}
+
 typedef struct deque_struct {
     VALUE* buffer;
     int max_length; //Should be the same size as buffer
@@ -61,7 +66,13 @@ static void deque_init(deque_t* deque, int max_length) {
 }
 
 static void deque_destroy(deque_t* deque) {
-    free(deque->buffer);
+    if (deque != NULL) {
+        deque->length = -1; /* sentinel */
+        deque->head = -1; /* sentinel */
+        deque->tail = -1; /* sentinel */
+
+        free(deque->buffer);
+    }
 }
 
 static void deque_destroy_callback(void* deque) {
@@ -69,15 +80,21 @@ static void deque_destroy_callback(void* deque) {
 }
 
 static int deque_empty_p(deque_t* deque) {
+  ASSERT_SANE_DEQUE(deque);
+
   return deque->length == 0;
 }
 
 static int deque_full_p(deque_t* deque) {
+  ASSERT_SANE_DEQUE(deque);
+
   return deque->length == deque->max_length;
 }
 
 
 static int deque_push(deque_t* deque, VALUE val) {
+  ASSERT_SANE_DEQUE(deque);
+
   if (deque_full_p(deque))
     return 0;
 
@@ -91,6 +108,9 @@ static int deque_push(deque_t* deque, VALUE val) {
 
 static VALUE deque_pop(deque_t* deque) {
   VALUE rtn;
+
+  ASSERT_SANE_DEQUE(deque);
+
   if (deque_empty_p(deque))
     return DEQUE_EMPTY;
   assert(deque->tail >= 0);
@@ -105,6 +125,9 @@ static VALUE deque_pop(deque_t* deque) {
 static VALUE deque_pop_back(deque_t* deque) {
   VALUE rtn;
   int index;
+
+  ASSERT_SANE_DEQUE(deque);
+
   if (deque_empty_p(deque))
     return DEQUE_EMPTY;
   index = deque->head;
