@@ -42,10 +42,10 @@ static int mode = MODE_SINGLE_THREAD_TWICE;
  * Deque
  */
 
-#define ASSERT_SANE_DEQUE(d) {\
-  assert(d != NULL);\
-  assert(d->max_length >= 0);\
-}
+#define ASSERT_SANE_DEQUE(d) do {               \
+        assert(d != NULL);                      \
+        assert(d->max_length >= 0);             \
+    } while(0);
 
 typedef struct deque_struct {
     VALUE* buffer;
