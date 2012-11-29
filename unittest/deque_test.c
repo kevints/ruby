@@ -255,5 +255,5 @@ int main (int ARGC, char** ARGV) {
     failures += test_pos_mod();
     printf("Got %d failures\n", failures);
 
-    return failures == 0;
+    return failures != 0;
 }
