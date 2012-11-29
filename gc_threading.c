@@ -134,7 +134,7 @@ static VALUE deque_pop_back(deque_t* deque) {
   assert(index >= 0);
   rtn = deque->buffer[index];
 
-  deque->head = POS_MOD(deque->head - 1, deque->max_length);
+  deque->head = POS_MOD(deque->head + 1, deque->max_length);
 
   deque->length--;
   return rtn;

@@ -21,6 +21,10 @@ extern void gc_start_mark(void* objspace) {
 
 }
 
+extern void gc_mark_reset(void* objspace) {
+    
+}
+
 int gc_defer_mark = 1;
 
 

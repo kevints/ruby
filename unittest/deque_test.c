@@ -58,6 +58,11 @@ VALUE do_deque_pop_test_call(TestCase* test_case) {
     return deque_pop(test_case->deque);
 }
 
+VALUE do_deque_pop_back_test_call(TestCase* test_case) {
+    return deque_pop_back(test_case->deque);
+}
+
+
 /* Ensure that the deque has the length specified by the test_case */
 int check_deque_length(TestCase* test_case) {
     return assert_equals(test_case->deque->length,
@@ -189,10 +194,20 @@ int check_pop_results(TestCase* test) {
     return errors;
 }
 
+int check_pop_back_results(TestCase* test) {
+    int i, errors = 0;
+    for (i = 0; i < test->test_length; i++) {
+        errors += assert_equals(do_deque_pop_back_test_call(test), 
+                                test->expected_vals[i],
+                                NULL
+                                );
+    }
+    return errors;
+}
+
 
 int test_deque_pop_returns_right_values() {
     TestCase t;
-    int i, errors = 0;
     TestCase* test = &t;
 
     VALUE test_vals[2] = {1,2};
@@ -213,7 +228,7 @@ int test_deque_pop_maintains_tail_with_wrap() {
     TestCase t;
     TestCase* test = &t;
     deque_t* deque;
-    int i, errors = 0;
+
 
     printf("test_deque_pop_returns_right_values:\n");
     init_test_case(test,
@@ -230,6 +245,44 @@ int test_deque_pop_maintains_tail_with_wrap() {
 }
 
 
+int test_deque_pop_back_returns_right_values() {
+    TestCase t;
+    TestCase* test = &t;
+    VALUE test_vals[2] = {1,2};
+    VALUE expected_vals[2] = {1, 2};
+    printf("test_deque_pop_back_returns_right_values:\n");
+
+    init_test_case(test,
+                   test_vals,
+                   expected_vals,                   
+                   2,
+                   4);
+    set_deque_state_for_pop_test(test);
+    
+    return check_pop_back_results(test) != 0;
+}
+
+int test_deque_pop_back_maintains_head_with_wrap() {
+    TestCase t;
+    TestCase* test = &t;
+    deque_t* deque;
+    int errors = 0;
+
+    printf("test_deque_pop_back_maintains_head_with_wrap\n");
+    init_test_case(test,
+                   NULL,
+                   NULL,                   
+                   3,
+                   3);
+    deque = test->deque;
+    deque->length = 2;
+    deque->head = 2;
+    deque->tail = 0;
+    deque_pop_back(deque);
+    return assert_equals(test->deque->head, 0, NULL);
+}
+
+
 int test_wraparound() {  
     return 0;
 }
@@ -237,21 +290,14 @@ int test_wraparound() {
 
 int main (int ARGC, char** ARGV) { 
     int failures = 0;
-    int num_tests = 3;
-    TestCase tests[num_tests];
 
-    VALUE test_vals[5] = {1,2,3, 4, 5};
-    VALUE expected_vals[5] = {1, 2, 3, 4, 5};
-    init_test_case(&tests[0],
-                   test_vals,
-                   expected_vals,
-                   5,
-                   10);
     failures += test_deque_push_with_wrap();
     failures += test_deque_push_maintains_tail_properly();
 
     failures += test_deque_pop_returns_right_values();
     failures += test_deque_pop_maintains_tail_with_wrap();
+    failures += test_deque_pop_back_returns_right_values();
+    failures += test_deque_pop_back_maintains_head_with_wrap();
     failures += test_pos_mod();
     printf("Got %d failures\n", failures);
 
