@@ -20,7 +20,7 @@ static int mode = MODE_DUAL;
 #define DEQUE_FULL 0
 #define DEQUE_EMPTY -1
 
-#define GC_THREADING_DEBUG 0
+#define GC_THREADING_DEBUG 1
 
 #if GC_THREADING_DEBUG
 #define debug_print(...)                        \
@@ -148,6 +148,11 @@ typedef struct global_queue_struct {
     unsigned int complete;
 } global_queue_t;
 
+void* active_objspace;
+global_queue_t* global_queue;
+pthread_key_t thread_local_deque_k;
+pthread_key_t thread_id_k;
+
 #define global_queue_count global_queue->deque.length
 
 static void global_queue_init(global_queue_t* global_queue) {
@@ -227,10 +232,6 @@ static void global_queue_offer_work(global_queue_t* global_queue, deque_t* local
  * Threading code
  */
 
-void* active_objspace;
-global_queue_t* global_queue;
-pthread_key_t thread_local_deque_k;
-pthread_key_t thread_id_k;
 
 static void* mark_run_loop(void* arg) {
     long thread_id = (long) arg;
@@ -273,8 +274,8 @@ static void gc_mark_parallel(void* objspace) {
     global_queue = &queuedata;
     global_queue_init(global_queue);
 
-    pthread_key_create(&thread_local_deque_k, deque_destroy_callback);
-    pthread_key_create(&thread_id_k, NULL);
+    assert(pthread_key_create(&thread_local_deque_k, deque_destroy_callback) == 0);
+    assert(pthread_key_create(&thread_id_k, NULL) == 0);
 
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -295,6 +296,8 @@ static void gc_mark_parallel(void* objspace) {
         //TODO: handle error codes
     }
 
+    assert(pthread_key_delete(thread_local_deque_k) == 0);
+    assert(pthread_key_delete(thread_id_k) == 0);
     global_queue_destroy(global_queue);
 }
 
@@ -303,36 +306,37 @@ void gc_mark_defer(void *objspace, VALUE ptr, int lev) {
     if (deque_push(deque, ptr) == 0) {
         global_queue_offer_work(global_queue, deque);
         if (deque_push(deque, ptr) == 0) {
-            gc_defer_mark = 0;
+            SET_GC_DEFER_MARK(0);
             gc_do_mark(objspace, ptr);
-            gc_defer_mark = 1;
+            SET_GC_DEFER_MARK(1);
         }
     }
 }
 
 void gc_markall(void* objspace) {
+    assert(pthread_key_create(&gc_defer_mark_key, NULL) == 0);
     switch (mode) {
         case MODE_SINGLE_THREAD:
-            gc_defer_mark = 0;
+            SET_GC_DEFER_MARK(0);
             gc_start_mark(objspace);
             break;
         case MODE_MULTITHREAD:
-            gc_defer_mark = 1;
+            SET_GC_DEFER_MARK(1);
             gc_mark_parallel(objspace);
             break;
         case MODE_DUAL:
-            gc_defer_mark = 1;
+            SET_GC_DEFER_MARK(1);
             GC_TEST_LOG("A\n");
             gc_mark_parallel(objspace);
             GC_TEST_LOG("END\n");
             gc_mark_reset(objspace);
-            gc_defer_mark = 0;
+            SET_GC_DEFER_MARK(0);
             GC_TEST_LOG("B\n");
             gc_start_mark(objspace);
             GC_TEST_LOG("END\n");
             break;
         case MODE_SINGLE_THREAD_TWICE:
-            gc_defer_mark = 0;
+            SET_GC_DEFER_MARK(0);
             GC_TEST_LOG("A\n");
             gc_start_mark(objspace);
             GC_TEST_LOG("END\n");
@@ -342,4 +346,5 @@ void gc_markall(void* objspace) {
             GC_TEST_LOG("END\n");
             break;
     }
+    assert(pthread_key_delete(gc_defer_mark_key) == 0);
 }

@@ -1345,7 +1345,7 @@ init_mark_stack(rb_objspace_t *objspace)
 
 #define MARK_STACK_EMPTY (mark_stack_ptr == mark_stack)
 
-int gc_defer_mark = 0;
+pthread_key_t gc_defer_mark_key;
 static void gc_mark(rb_objspace_t *objspace, VALUE ptr, int lev);
 static void gc_mark_children(rb_objspace_t *objspace, VALUE ptr, int lev);
 
@@ -1636,7 +1636,7 @@ gc_mark_object(rb_objspace_t *objspace, VALUE ptr, int lev)
     obj->as.basic.flags |= FL_MARK;
     objspace->heap.live_num++;
 
-    if (!gc_defer_mark) {
+    if (!GET_GC_DEFER_MARK()) {
         if (lev > GC_LEVEL_MAX || (lev == 0 && stack_check(STACKFRAME_FOR_GC_MARK))) {
             if (!mark_stack_overflow) {
                 if (mark_stack_ptr - mark_stack < MARK_STACK_MAX) {
@@ -1655,7 +1655,7 @@ gc_mark_object(rb_objspace_t *objspace, VALUE ptr, int lev)
 
 static void
 gc_mark(rb_objspace_t *objspace, VALUE ptr, int lev) {
-    if (gc_defer_mark) {
+    if (GET_GC_DEFER_MARK()) {
         gc_mark_defer(objspace, ptr, lev);
     } else {
         gc_mark_object(objspace, ptr, lev);
@@ -2512,7 +2512,7 @@ gc_marks(rb_objspace_t *objspace)
     rb_gc_mark_unlinked_live_method_entries(th->vm);
 
     /* gc_mark objects whose marking are not completed*/
-    if (!gc_defer_mark) {
+    if (!GET_GC_DEFER_MARK()) {
         while (!MARK_STACK_EMPTY) {
             if (mark_stack_overflow) {
                 gc_mark_all(objspace);

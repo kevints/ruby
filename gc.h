@@ -101,14 +101,15 @@ extern void gc_mark_defer(void *objspace, VALUE ptr, int lev);
 extern void gc_markall(void* objspace);
 
 /** Defined in gc.c */
-extern int gc_defer_mark;
+extern pthread_key_t gc_defer_mark_key;
 extern void gc_mark_reset(void* objspace);
 extern void gc_do_mark(void* objspace, VALUE ptr);
 extern void gc_start_mark(void* objspace);
 
 /** Test code */
-#define GC_MARK_TEST 1
+#define GC_MARK_TEST 0
 #define TEST_LOG_PREFIX "GCTest"
+
 
 #if GC_MARK_TEST
 #define GC_TEST_LOG(...)                              \
@@ -117,5 +118,13 @@ extern void gc_start_mark(void* objspace);
 #define GC_TEST_LOG(...)              \
     //noop
 #endif
+
+/* Helper macros */
+//Type of 
+#define SET_GC_DEFER_MARK(_val)                                         \
+    assert(pthread_setspecific(gc_defer_mark_key, (void*) _val) == 0)
+
+#define GET_GC_DEFER_MARK()                     \
+    ((long) pthread_getspecific(gc_defer_mark_key))
 
 #endif /* RUBY_GC_H */
