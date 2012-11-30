@@ -9,7 +9,7 @@
 #define MODE_DUAL 2
 #define MODE_SINGLE_THREAD_TWICE 3
 
-static int mode = MODE_SINGLE_THREAD_TWICE;
+static int mode = MODE_DUAL;
 
 #define NTHREADS 4
 #define GLOBAL_QUEUE_SIZE 500 /*TODO*/
@@ -95,8 +95,8 @@ static int deque_full_p(deque_t* deque) {
 static int deque_push(deque_t* deque, VALUE val) {
   ASSERT_SANE_DEQUE(deque);
 
-  if (deque_full_p(deque))
-    return 0;
+  if(deque_full_p(deque))
+      return 0;
 
   if (! deque_empty_p(deque))
       deque->tail = POS_MOD(deque->tail + 1, deque->max_length);
@@ -110,9 +110,7 @@ static VALUE deque_pop(deque_t* deque) {
   VALUE rtn;
 
   ASSERT_SANE_DEQUE(deque);
-
-  if (deque_empty_p(deque))
-    return DEQUE_EMPTY;
+  assert(! deque_empty_p(deque));
   assert(deque->tail >= 0);
   rtn = deque->buffer[deque->tail];
 
@@ -127,9 +125,7 @@ static VALUE deque_pop_back(deque_t* deque) {
   int index;
 
   ASSERT_SANE_DEQUE(deque);
-
-  if (deque_empty_p(deque))
-    return DEQUE_EMPTY;
+  assert(! deque_empty_p(deque));
   index = deque->head;
   assert(index >= 0);
   rtn = deque->buffer[index];
@@ -307,7 +303,9 @@ void gc_mark_defer(void *objspace, VALUE ptr, int lev) {
     if (deque_push(deque, ptr) == 0) {
         global_queue_offer_work(global_queue, deque);
         if (deque_push(deque, ptr) == 0) {
+            gc_defer_mark = 0;
             gc_do_mark(objspace, ptr);
+            gc_defer_mark = 1;
         }
     }
 }
