@@ -30,7 +30,6 @@ static int mode = MODE_DUAL;
     double _diff;                                                       
 
 
-
 #ifdef BENCH
 #define TIME(_call)                                                     \
     do {                                                                \
@@ -42,7 +41,7 @@ static int mode = MODE_DUAL;
     }  while(0);    
 #else 
 #define TIME(_call)                             \
-    //noop
+    _call
 #endif
 
 
