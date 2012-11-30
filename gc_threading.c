@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <time.h>
 
 #define MODE_SINGLE_THREAD 0
 #define MODE_MULTITHREAD 1
@@ -11,7 +12,9 @@
 
 static int mode = MODE_DUAL;
 
+#ifndef NTHREADS
 #define NTHREADS 4
+#endif
 #define GLOBAL_QUEUE_SIZE 500 /*TODO*/
 #define GLOBAL_QUEUE_SIZE_MIN (GLOBAL_QUEUE_SIZE / 4)
 #define LOCAL_QUEUE_SIZE 200 /*TODO*/
@@ -20,7 +23,30 @@ static int mode = MODE_DUAL;
 #define DEQUE_FULL 0
 #define DEQUE_EMPTY -1
 
-#define GC_THREADING_DEBUG 1
+#define BENCH 1
+
+#define SETUP_TIME                                                      \
+    struct timeval _start, _end;                                        \
+    double _diff;                                                       
+
+
+
+#ifdef BENCH
+#define TIME(_call)                                                     \
+    do {                                                                \
+        gettimeofday(&_start, NULL);                                    \
+        _call;                                                          \
+        gettimeofday(&_end, NULL);                                      \
+        _diff = _end.tv_usec - _start.tv_usec;                          \
+        printf(#_call ": %f\n", _diff / 1000.0);                        \
+    }  while(0);    
+#else 
+#define TIME(_call)                             \
+    //noop
+#endif
+
+
+#define GC_THREADING_DEBUG 0
 
 #if GC_THREADING_DEBUG
 #define debug_print(...)                        \
@@ -315,7 +341,9 @@ void gc_mark_defer(void *objspace, VALUE ptr, int lev) {
 
 void gc_markall(void* objspace) {
     assert(pthread_key_create(&gc_defer_mark_key, NULL) == 0);
+    printf("Nthreads: %d\n", NTHREADS);
     switch (mode) {
+        SETUP_TIME;
         case MODE_SINGLE_THREAD:
             SET_GC_DEFER_MARK(0);
             gc_start_mark(objspace);
@@ -324,15 +352,16 @@ void gc_markall(void* objspace) {
             SET_GC_DEFER_MARK(1);
             gc_mark_parallel(objspace);
             break;
-        case MODE_DUAL:
+        case MODE_DUAL:            
             SET_GC_DEFER_MARK(1);
             GC_TEST_LOG("A\n");
-            gc_mark_parallel(objspace);
+            
+            TIME(gc_mark_parallel(objspace));
             GC_TEST_LOG("END\n");
             gc_mark_reset(objspace);
             SET_GC_DEFER_MARK(0);
             GC_TEST_LOG("B\n");
-            gc_start_mark(objspace);
+            TIME(gc_start_mark(objspace));
             GC_TEST_LOG("END\n");
             break;
         case MODE_SINGLE_THREAD_TWICE:
