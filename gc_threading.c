@@ -30,7 +30,7 @@ static int mode = MODE_DUAL;
     double _diff;                                                       
 
 
-#ifdef BENCH
+#if BENCH
 #define TIME(_call)                                                     \
     do {                                                                \
         gettimeofday(&_start, NULL);                                    \

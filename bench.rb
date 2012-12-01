@@ -3,7 +3,7 @@
 RESULTS_DIR = "./bench_results"
 BENCH_DIR = "./benchmark"
 GOOD_BENCH = "./miniruby_bench"
-MAX_THREADS = 2
+MAX_THREADS = 16
 
 def bench(script, nthreads) 
   bench_pattern = /bm_(.*?\.rb)/
